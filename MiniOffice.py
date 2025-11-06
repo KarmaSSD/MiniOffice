@@ -262,20 +262,20 @@ class VentanaPrincipal(QMainWindow):
         self.text_edit.clear()
         self.text_edit.setCurrentCharFormat(self.formato_predeterminado)
         self.status.showMessage("Nuevo documento creado", 2000)
-
+        
     def abrir_documento(self):
-        ruta, _ = QFileDialog.getOpenFileName(self, "Abrir documento", "", "Text Files (*.txt);;All Files (*)")
-        if ruta:
-            with open(ruta, "r", encoding="utf-8") as f:
-                self.text_edit.setPlainText(f.read())
-            self.status.showMessage(f"Documento '{ruta}' abierto", 2000)
+        ruta = QFileDialog.getOpenFileName(self, "Abrir documento", "", "Text Files (*.txt);;All Files (*)")
+        if ruta[0]:
+            with open(ruta[0], "r", encoding="utf-8") as archivo:
+                self.text_edit.setPlainText(archivo.read())
+            self.status.showMessage(f"Documento '{ruta[0]}' abierto", 2000)
 
     def guardar_documento(self):
-        ruta, _ = QFileDialog.getSaveFileName(self, "Guardar documento", "", "Text Files (*.txt);;All Files (*)")
-        if ruta:
-            with open(ruta, "w", encoding="utf-8") as f:
-                f.write(self.text_edit.toPlainText())
-            self.status.showMessage(f"Documento guardado en '{ruta}'", 2000)
+        ruta = QFileDialog.getSaveFileName(self, "Guardar documento", "", "Text Files (*.txt);;All Files (*)")
+        if ruta[0]:
+            with open(ruta[0], "w", encoding="utf-8") as archivo:
+                archivo.write(self.text_edit.toPlainText())
+            self.status.showMessage(f"Documento guardado en '{ruta[0]}'", 2000)
 
     # PERSONALIZACIÓN 
     def cambiar_color_letra(self):

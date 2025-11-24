@@ -1,32 +1,24 @@
-## Memoria de comandos
+  ## Entorno de trabajo - Pipenv / Pipx
+  1) Instalar pipx (opcional si ya lo tienes):
+     - `python -m pip install --user pipx`
+     - `python -m pipx ensurepath`  (reabre la terminal)
+     - `pipx install pipenv`
 
-  1. Crear e inicializar el entorno con pipenv (convirtiendo `requirements.txt` a `Pipfile`):
+  2) Inicializar el entorno con Python 3.13:
+     - `pipenv --python 3.13`
+     - Importar requirements (convirtió a Pipfile): `pipenv install -r requirements.txt`
+     - Instalar dependencias: `pipenv install pyside6 pyinstaller`
 
-  pipenv install -r requirements.txt
-  pipenv install
+  3) Entrar al subshell y probar:
+     - `pipenv shell`
+     - `python MiniOffice.py`
 
-
-  pipenv install pyside6 pyinstaller
-
-
-  3. (Opcional) Instalar PyInstaller global con pipx:
-
-  pipx install pyinstaller
-
-
-  4. Verificar versiones en el entorno:
-
-  pipenv run python -c "import PySide6, PySide6.QtCore as QC, PyInstaller; \
-  print('PySide6', PySide6.version); print('Qt', QC.qVersion()); \
-  print('PyInstaller', PyInstaller.version)"
-
-
-  5. Construir el ejecutable (incluyendo carpeta `Images`):
+  ## PyInstaller - Generar el ejecutable (MiniOffice)
 
   pipenv run pyinstaller --clean --noconfirm --windowed --onefile \
   --name MiniOffice --add-data "Images;Images" MiniOffice.py
 
-
-  6. (Consulta de resultado y avisos):
-  - Ejecutable generado en `dist/MiniOffice.exe`.
-  - Avisos de PyInstaller en `build/MiniOffice/warn-MiniOffice.txt`.
+  - Crea:
+  - `dist/MiniOffice.exe` ← ejecutable
+  - `build/` (archivos temporales y avisos)
+  - `MiniOffice.spec`

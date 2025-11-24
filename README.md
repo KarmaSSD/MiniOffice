@@ -1,5 +1,4 @@
-  ## Entorno de trabajo - Pipenv / Pipx
-  1) Instalar pipx (opcional si ya lo tienes):
+  1) Instalar pipx:
      - `python -m pip install --user pipx`
      - `python -m pipx ensurepath`  (reabre la terminal)
      - `pipx install pipenv`

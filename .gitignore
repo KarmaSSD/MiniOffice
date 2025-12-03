@@ -6,6 +6,8 @@ build/
 dist/
 Output/
 
+Pipfile.lock
+requirements.txt
 *.exe
 *.pfx
 *.p12

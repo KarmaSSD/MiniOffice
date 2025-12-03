@@ -4,6 +4,9 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pyside6 = ">=6.6.0"
+pyaudio = ">=0.2.14"
+speechrecognition = {extras = ["audio"], version = ">=3.10.0"}
 
 [dev-packages]
 

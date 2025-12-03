@@ -21,3 +21,9 @@
   - `dist/MiniOffice.exe` ← ejecutable
   - `build/` (archivos temporales y avisos)
   - `MiniOffice.spec`
+
+  ## Reconocimiento de voz (dependencias)
+  - Instalar paquetes de voz en el entorno pipenv:
+    - `pipenv install "SpeechRecognition[audio]" pyaudio`
+  - Si usas el `requirements.txt`, sincroniza primero:
+    - `pipenv install -r requirements.txt`

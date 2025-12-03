@@ -7,8 +7,81 @@ from PySide6.QtGui import (
     QAction, QKeySequence, QIcon, QTextCursor, QTextDocument,
     QFont, QTextCharFormat, QColor
 )
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QThread, Signal
 import os;
+
+
+class HiloVoz(QThread):
+    transcrito = Signal(str)
+    error = Signal(str)
+    estado = Signal(bool)
+
+    def __init__(self):
+        super().__init__()
+        self._seguir = True
+
+    def detener(self):
+        self._seguir = False
+
+    def run(self):
+        try:
+            import speech_recognition as sr
+        except Exception:
+            self.error.emit("Falta 'speech_recognition'. Instala SpeechRecognition.")
+            self.estado.emit(False)
+            return
+        self._sr = sr
+        try:
+            import pyaudio  # noqa: F401
+        except Exception:
+            self.error.emit("Falta 'pyaudio'. Instala PyAudio.")
+            self.estado.emit(False)
+            return
+
+        recognizer = sr.Recognizer()
+        try:
+            with sr.Microphone() as source:
+                self._timeouts = 0
+                while self._seguir:
+                    texto = self.reconocer_voz(recognizer, source)
+                    if texto is None:
+                        break
+                    if texto == "":
+                        self._timeouts += 1
+                        # Detener si no hay voz durante el timeout (5s)
+                        if self._timeouts >= 1:
+                            self.error.emit("Voz detenida por inactividad (5s).")
+                            break
+                        continue
+                    self._timeouts = 0
+                    self.transcrito.emit(texto)
+        except Exception as exc:
+            self.error.emit(f"No se pudo abrir el microfono: {exc}")
+        self.estado.emit(False)
+
+    def reconocer_voz(self, recognizer, source):
+        sr = getattr(self, "_sr", None)
+        try:
+            recognizer.adjust_for_ambient_noise(source, duration=0.6)
+            recognizer.pause_threshold = 1.2
+            recognizer.non_speaking_duration = 0.6
+            audio = recognizer.listen(source, timeout=5, phrase_time_limit=10)
+        except Exception as exc:
+            if sr is not None and isinstance(exc, sr.WaitTimeoutError):
+                return ""
+            self.error.emit(f"Error de voz: {exc}")
+            return None
+
+        try:
+            texto = recognizer.recognize_google(audio, language="es-ES")
+            return texto.strip()
+        except Exception as exc:
+            if sr is not None and isinstance(exc, sr.UnknownValueError):
+                return ""
+            if sr is not None and isinstance(exc, sr.RequestError):
+                return ""
+            self.error.emit(f"Error de voz: {exc}")
+            return None
 
 
 class VentanaPrincipal(QMainWindow):
@@ -17,6 +90,7 @@ class VentanaPrincipal(QMainWindow):
 
         self.setWindowTitle("Mini Word")
         self.resize(900, 600)
+        self.hilo_voz = None
 
         # Editor de texto
         self.text_edit = QTextEdit()
@@ -140,6 +214,12 @@ class VentanaPrincipal(QMainWindow):
         toolbar.addSeparator()
 
         toolbar.addAction(self.accion_buscar)
+
+        self.btn_voz = QPushButton("Voz")
+        self.btn_voz.setCheckable(True)
+        self.btn_voz.setToolTip("Escuchar: negrita, cursiva, subrayado, guardar archivo, nuevo documento")
+        self.btn_voz.clicked.connect(self.toggle_escucha_voz)
+        toolbar.addWidget(self.btn_voz)
 
 
     # ----------- BARRA DE FORMATO -----------
@@ -541,6 +621,81 @@ class VentanaPrincipal(QMainWindow):
                 btn.setStyleSheet("QPushButton:checked { background-color: #d0eaff; }")
             else:
                 btn.setStyleSheet("")
+
+
+    # ----------------- VOZ -----------------
+    def toggle_escucha_voz(self):
+        if self.btn_voz.isChecked():
+            try:
+                import speech_recognition  # noqa: F401
+                import pyaudio  # noqa: F401
+            except Exception:
+                self.btn_voz.setChecked(False)
+                QMessageBox.warning(self, "Voz", "Faltan dependencias: instala SpeechRecognition y PyAudio.")
+                return
+            self.iniciar_hilo_voz()
+        else:
+            self.detener_hilo_voz()
+
+    def iniciar_hilo_voz(self):
+        if self.hilo_voz is not None:
+            return
+        self.hilo_voz = HiloVoz()
+        self.hilo_voz.transcrito.connect(self.ejecutar_comando_voz)
+        self.hilo_voz.error.connect(self.mostrar_error_voz)
+        self.hilo_voz.estado.connect(self.actualizar_estado_voz)
+        self.hilo_voz.start()
+        self.status.showMessage("Escuchando comandos de voz...", 2000)
+
+    def detener_hilo_voz(self):
+        if self.hilo_voz is None:
+            return
+        self.hilo_voz.detener()
+        self.hilo_voz.wait()
+        self.hilo_voz = None
+        self.btn_voz.setChecked(False)
+        self.status.showMessage("Voz detenida", 2000)
+
+    def actualizar_estado_voz(self, escuchando):
+        self.btn_voz.setChecked(escuchando)
+        if not escuchando:
+            self.status.showMessage("Voz detenida", 2000)
+
+    def mostrar_error_voz(self, mensaje):
+        self.detener_hilo_voz()
+        QMessageBox.warning(self, "Voz", mensaje)
+
+    def ejecutar_comando_voz(self, texto):
+        comando = texto.lower().strip()
+
+        def incluye(*palabras):
+            return all(p in comando for p in palabras)
+
+        if "negrita" in comando:
+            self.toggle_negrita()
+            self.status.showMessage(f"Voz: negrita ({texto})", 2000)
+        elif "cursiva" in comando:
+            self.toggle_cursiva()
+            self.status.showMessage(f"Voz: cursiva ({texto})", 2000)
+        elif "subrayado" in comando:
+            self.toggle_subrayado()
+            self.status.showMessage(f"Voz: subrayado ({texto})", 2000)
+        elif incluye("guardar", "archivo") or "guardar" in comando:
+            self.guardar_documento()
+            self.status.showMessage(f"Voz: guardar ({texto})", 2000)
+        elif incluye("nuevo", "documento") or "nuevo" in comando:
+            self.nuevo_documento()
+            self.status.showMessage(f"Voz: nuevo documento ({texto})", 2000)
+        else:
+            cursor = self.text_edit.textCursor()
+            cursor.insertText(texto + " ")
+            self.text_edit.setTextCursor(cursor)
+            self.status.showMessage(f"Voz (texto añadido): {texto}", 3000)
+
+    def closeEvent(self, event):
+        # Asegura que el hilo de voz se detenga al cerrar
+        self.detener_hilo_voz()
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":

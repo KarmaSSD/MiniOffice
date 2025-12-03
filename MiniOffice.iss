@@ -1,9 +1,9 @@
 ; Inno Setup script for MiniOffice (paths relative for portability)
 #define MyAppName "MiniOffice"
-#define MyAppVersion "1.0"
+#define MyAppVersion "2.0"
 #define MyAppPublisher "Miralmonte FP by Santiago"
 #define MyAppURL "https://www.miralmonte.com"
-#define MyAppExeName "MiniOffice.exe"
+#define MyAppExeName "MiniOfficeApp.exe"
 
 [Setup]
 AppId={{6933FE3C-9DB5-4278-ACA2-88F1D6E2B584}
@@ -23,7 +23,7 @@ LicenseFile=docs\LICENSE.txt
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 OutputDir=Output
-OutputBaseFilename=MiniOffice
+OutputBaseFilename=MiniOffice_v2
 SetupIconFile=imagesMO\iconoApp.ico
 SolidCompression=yes
 WizardStyle=modern dynamic windows11

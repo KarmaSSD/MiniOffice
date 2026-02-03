@@ -8,7 +8,8 @@ from PySide6.QtGui import (
     QFont, QTextCharFormat, QColor
 )
 from PySide6.QtCore import Qt, QThread, Signal
-import os;
+import os
+from contadorWidget import WordCounterWidget
 
 
 class HiloVoz(QThread):
@@ -111,8 +112,8 @@ class VentanaPrincipal(QMainWindow):
 
         # Barra de estado
         self.status = self.statusBar()
-        self.label_palabras = QLabel("Palabras: 0")
-        self.status.addPermanentWidget(self.label_palabras)
+        self.word_counter = WordCounterWidget()
+        self.status.addPermanentWidget(self.word_counter)
 
         # Menus
         self.crear_menus()
@@ -336,7 +337,7 @@ class VentanaPrincipal(QMainWindow):
     # DOCUMENTO
     def actualizar_contador_palabras(self):
         texto = self.text_edit.toPlainText()
-        self.label_palabras.setText(f"Palabras: {len(texto.split())}")
+        self.word_counter.update_from_text(texto)
 
     def nuevo_documento(self):
         self.text_edit.clear()
@@ -564,7 +565,7 @@ class VentanaPrincipal(QMainWindow):
     def al_cambiar_texto(self):
         # Actualiza el contador de palabras
         texto = self.text_edit.toPlainText()
-        self.label_palabras.setText(f"Palabras: {len(texto.split())}")
+        self.word_counter.update_from_text(texto)
 
         # Si el documento está vacío, restablece el formato predeterminado
         if not texto:
